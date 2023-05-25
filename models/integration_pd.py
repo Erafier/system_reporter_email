@@ -1,3 +1,5 @@
+from enum import Enum
+
 import binascii
 import smtplib
 from typing import Optional, List, Union
@@ -12,7 +14,14 @@ import base64
 from ...integrations.models.pd.integration import SecretField
 
 
+class EmailType(str, Enum):
+    invitational = 'invitational'
+    task_notification = 'task_notification'
+
+
 class IntegrationModel(BaseModel):
+    class Config:
+        use_enum_values = True
 
     # TODO: Update template
     _default_template = 'PGRpdj5EZWZhdWx0IHRlbXBsYXRlPC9kaXY+'
@@ -23,6 +32,7 @@ class IntegrationModel(BaseModel):
     passwd: Union[SecretField, str]
     sender: Optional[str]
     template: Optional[str] = _default_template
+    type: EmailType = EmailType.invitational
 
     def check_connection(self, **kwargs) -> bool:
         try:

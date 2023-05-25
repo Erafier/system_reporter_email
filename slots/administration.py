@@ -11,6 +11,12 @@ class Slot:
             integration_name=self.descriptor.name,
             mode=c.ADMINISTRATION_MODE
         )
+
+        integrations = [
+            integration for integration in integrations
+            if integration.settings['type'] == 'invitational'
+        ]
+
         with context.app.app_context():
             return self.descriptor.render_template(
                 'administration/content.html',
@@ -21,19 +27,18 @@ class Slot:
     @web.slot('users_email_invitation_content')
     def users_email_invitation_content(self, context, slot, payload):
         log.info('SYSYSYYS %s', payload)
-        admin_integrations = context.rpc_manager.call.integrations_get_project_integrations_by_name(
-            project_id=None,
+        available_integrations = context.rpc_manager.call.get_all_integrations_by_name(
             integration_name=self.descriptor.name,
-            mode=c.ADMINISTRATION_MODE
         )
-        project_integrations = context.rpc_manager.call.integrations_get_project_integrations_by_name(
-            project_id=payload['project_id'],
-            integration_name=self.descriptor.name,
-            mode=c.DEFAULT_MODE
-        )
+
+        integrations = [
+            integration for integration in available_integrations
+            if integration.settings['type'] == 'invitational'
+        ]
+
         with context.app.app_context():
             return self.descriptor.render_template(
                 'administration/content.html',
-                integrations=[*project_integrations, *admin_integrations],
+                integrations=integrations,
                 integrations_url='/-/configuration/integrations'
             )

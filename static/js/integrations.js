@@ -1,6 +1,9 @@
 const SystemEmailIntegrationModal = {
     delimiters: ['[[', ']]'],
-    props: ['instance_name', 'display_name', 'default_template', 'logo_src', 'section_name'],
+    props: [
+        'instance_name', 'display_name', 'default_template', 'logo_src', 'section_name',
+        'allowed_types'
+    ],
     emits: ['update'],
     components: {
         SecretFieldInput: SecretFieldInput
@@ -24,6 +27,16 @@ const SystemEmailIntegrationModal = {
     >
         <template #body>
             <div class="form-group">
+                <div class="mb-3">
+                <p class="font-h5 font-semibold mb-1">Email type</p>
+                <div class="custom-input">
+                <select class="selectpicker bootstrap-select__b" 
+                    v-model="type"
+                >
+                    <option v-for="email_type in JSON.parse(allowed_types)" :value="email_type" >[[ email_type ]]</option>
+                </select>
+                </div>
+                </div>
                 <div class="mb-3">
                     <p class="font-h5 font-semibold mb-1">Host</p>
                     <input type="text" v-model="host" class="form-control form-control-alternative"
@@ -130,10 +143,11 @@ const SystemEmailIntegrationModal = {
                 project_id,
                 base64Template: template,
                 status,
+                type
             } = this
             return {
                 host, port, user, passwd, sender, description, is_default,
-                project_id, template, status, mode: this.$root.mode
+                project_id, template, status, mode: this.$root.mode, type
             }
         },
         base64Template() {
@@ -144,6 +158,11 @@ const SystemEmailIntegrationModal = {
         },
         modal_id() {
             return `${this.instance_name}_integration`
+        }
+    },
+    watch: {
+        type() {
+            this.$nextTick(this.refresh_pickers)
         }
     },
     methods: {
@@ -172,6 +191,9 @@ const SystemEmailIntegrationModal = {
             error_data.forEach(item => {
                 this.error = {[item.loc[0]]: item.msg}
             })
+        },
+        refresh_pickers() {
+            $(this.$el).find('.selectpicker').selectpicker('redner').selectpicker('refresh')
         },
         async handleResponseError(response) {
             try {
@@ -326,10 +348,7 @@ const SystemEmailIntegrationModal = {
             host: '',
             port: null,
             user: '',
-            passwd: {
-                value: '',
-                from_secrets: false
-            },
+            passwd: '',
             sender: '',
             description: '',
             is_default: false,
@@ -341,6 +360,7 @@ const SystemEmailIntegrationModal = {
             pluginName: 'system_reporter_email',
             status: integration_status.pending,
             api_url: V.build_api_url('integrations', 'integration') + '/',
+            type: '',
         })
     }
 }
